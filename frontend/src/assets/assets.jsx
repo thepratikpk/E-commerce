@@ -25,7 +25,6 @@ import razorpay from './projectimages/razorpay.png';
 // import paypal from './projectimages/paypal.png';
 import about from './projectimages/about.png';
 import contact from './projectimages/contact.png';
-import menu from './projectimages/menu.png';
 import support from './projectimages/support.png';
 import search from './projectimages/search.png';
 import quality from './projectimages/quality.png';
@@ -36,12 +35,13 @@ import bin from './projectimages/bin.png';
 import mainpictures from './projectimages/mainpictures.jpg';
 import cart from './projectimages/cart.png';
 import hii from './projectimages/hii.png';
+import menu from './projectimages/menu.png';
 
-export const assests ={
+export const assets ={
     hii,
     stripe,
     razorpay,
-    paypal,
+    // paypal,
     about,
     contact,
     menu,
