@@ -20,5 +20,8 @@ app.use(express.static("public"))
 
 app.use(cookieparser());
 
+// API endpoints
+
+
 
 export {app}
