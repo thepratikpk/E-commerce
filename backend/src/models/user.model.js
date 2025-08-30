@@ -40,6 +40,10 @@ const userSchema = new mongoose.Schema({
         type: Object,
         default: {}
     },
+    refershToken:{
+        type:String
+    },
+    
     googleId: {
         type: String,
         unique: true,

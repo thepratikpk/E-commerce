@@ -13,7 +13,7 @@ const productSchema=new mongoose.Schema({
         type:Number,
         required:true
     },
-    image:{
+    images:{
         type:Array,
         required:true
     },
@@ -31,10 +31,6 @@ const productSchema=new mongoose.Schema({
     },
     bestseller:{
         type:Boolean
-    },
-    date:{
-        type:Number,
-        required:true
     }
 },{
     timestamps:true
