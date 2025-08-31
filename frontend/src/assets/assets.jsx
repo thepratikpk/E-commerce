@@ -54,6 +54,7 @@ export const assets ={
     bin,
     mainpictures,
     cart,
+   
      Screenshot1,
   Screenshot2,
   Screenshot3,
