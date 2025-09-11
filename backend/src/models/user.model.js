@@ -40,7 +40,12 @@ const userSchema = new mongoose.Schema({
         type: Object,
         default: {}
     },
-    refershToken:{
+    role: {
+            type: String,
+            enum: ['user','admin'],
+            default: 'user'
+        },
+    refreshToken:{
         type:String
     },
     
