@@ -9,7 +9,8 @@ const LatestCollection = () => {
     const [latestProducts,setLatestProducts]=useState([]);
     useEffect(()=>{
         
-        setLatestProducts(productScreenshots.slice(0,3));
+        setLatestProducts(productScreenshots.slice(0,6));
+
     },[])
   return (
     <div className='my-10'>

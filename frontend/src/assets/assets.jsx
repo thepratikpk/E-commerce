@@ -36,6 +36,9 @@ import mainpictures from './projectimages/mainpictures.jpg';
 import cart from './projectimages/cart.png';
 import hii from './projectimages/hii.png';
 import menu from './projectimages/menu.png';
+import crosss from './projectimages/crosss.png';
+import star from './projectimages/star.png';
+import stardulll from './projectimages/stardulll.png';
 
 export const assets ={
     hii,
@@ -52,10 +55,13 @@ export const assets ={
     exchange,
     dropdown,
     bin,
+    crosss,
     mainpictures,
     cart,
+    star,
+    stardulll,
    
-     Screenshot1,
+  Screenshot1,
   Screenshot2,
   Screenshot3,
   Screenshot4,
@@ -80,11 +86,35 @@ export const productScreenshots =[
     {
         _id: "aa",
         name: "Women Bodycon dress",
-        description:"A bodycon dress is a tight-fitting style that hugs the body and accentuates the wearer's curves. It is typically made from stretchy materials like spandex, lycra, or jersey, allowing for a snug fit that contours to the shape of the body. Bodycon dresses are often designed to be short, usually falling above the knee, but they can also come in midi or maxi lengths. They are popular for their sexy and confident look, making them a favorite choice for parties, nightclubs, and special occasions. Bodycon dresses can feature various necklines, sleeve lengths, and embellishments, allowing for a range of styles from casual to formal.",
+        description:"This sophisticated one-shoulder dress features a form-fitting silhouette that highlights the waist with elegant ruching details. The asymmetrical neckline adds a modern and chic touch, while the single shoulder strap creates a striking, stylish look. The dress falls to a midi length with a subtle side slit, offering ease of movement and a hint of allure. Perfect for formal events or evening occasions, this dress pairs beautifully with minimal accessories to let its design stand out.",
         price: 500,
-        image:[Screenshot10,Screenshot11,Screenshot12,Screenshot13,Screenshot14,Screenshot15,Screenshot16,Screenshot17,Screenshot18,Screenshot19],
+        image:[Screenshot10,Screenshot11],
         category: "Women",
-        subCaegory: "Dresses",
+        subCaegory: "Women-Bodycon",
+        size: ["S","M","L","XL"],
+        Date: 1716634345448,
+        bestseller: true
+    },
+    {
+        _id: "aaz",
+        name: "Women Bodycon dress",
+        description:"This elegant black maxi dress features a sleek, form-fitting silhouette that accentuates the figure. It has thin spaghetti straps and a straight neckline, giving it a minimalist yet sophisticated look. The dress flows smoothly down to the ankles, creating a graceful and elongated appearance. Perfect for both casual outings and formal events, this versatile dress pairs beautifully with accessories like sunglasses and a chic handbag, as shown in the image.",
+        price: 900,
+        image:[Screenshot14,Screenshot12,Screenshot13,Screenshot15],
+        category: "Women",
+        subCaegory: "Women-Bodycon",
+        size: ["S","M","L","XL"],
+        Date: 1716634345448,
+        bestseller: true
+    },
+    {
+        _id: "aazy",
+        name: "Women Bodycon dress",
+        description:"A bodycon dress is a tight-fitting style that hugs the body and accentuates the wearer's curves. It is typically made from stretchy materials like spandex, lycra, or jersey, allowing for a snug fit that contours to the shape of the body. Bodycon dresses are often designed to be short, usually falling above the knee, but they can also come in midi or maxi lengths. They are popular for their sexy and confident look, making them a favorite choice for parties, nightclubs, and special occasions. Bodycon dresses can feature various necklines, sleeve lengths, and embellishments, allowing for a range of styles from casual to formal.",
+        price: 450,
+        image:[Screenshot17,Screenshot16,Screenshot18,Screenshot19],
+        category: "Women",
+        subCaegory: "Women-Bodycon",
         size: ["S","M","L","XL"],
         Date: 1716634345448,
         bestseller: true
@@ -92,11 +122,11 @@ export const productScreenshots =[
     {
         _id: "ab",
         name: "Women Topwear",
-        description:"Topwear refers to clothing items that are worn on the upper part of the body. This category includes a wide range of garments such as t-shirts, blouses, shirts, tank tops, crop tops, sweaters, hoodies, and jackets. Topwear can vary in style, fabric, and fit, catering to different occasions and personal preferences. It is an essential part of any wardrobe, providing both comfort and fashion. Topwear can be paired with various bottom wear options like jeans, skirts, shorts, or trousers to create diverse outfits suitable for casual, formal, or athletic settings.",
+        description:"This chic black top features a fitted design that accentuates the figure. It has a classic collar with a deep V-neckline, adding a touch of sophistication and modern flair. The short sleeves make it versatile for both casual and semi-formal occasions. Its simple yet elegant style makes it easy to pair with jeans, skirts, or tailored pants for a polished look.",
         price: 250,
         image:[Screenshot7,Screenshot8,Screenshot9],
         category: "Women",
-        subCaegory: "Topwear",
+        subCaegory: "T-shirt",
         size: ["S","M","L","XL"],
         Date: 1716634345445,
         bestseller: true
@@ -104,9 +134,21 @@ export const productScreenshots =[
     {
         _id: "xx",
         name: "T-shirt",
-        description:"A t-shirt, also known as a tee, is a casual garment typically made of cotton or a cotton blend. It features a simple design with short sleeves and a round neckline, making it comfortable and versatile for everyday wear. T-shirts come in various colors, patterns, and styles, including graphic tees with printed designs or logos. They can be worn by people of all",
+        description:"This sporty sleeveless hoodie is designed for an active lifestyle, featuring a comfortable and breathable fabric in classic black. It has a relaxed fit with a drawstring hood, perfect for layering or wearing on its own during workouts. The sleeveless design allows for maximum arm movement and showcases tattoos or muscular arms stylishly. Reflective details near the hem add a touch of safety for evening runs or outdoor activities.",
         price:150,
-        image:[Screenshot1,Screenshot2,Screenshot3,Screenshot4,Screenshot5,Screenshot6],
+        image:[Screenshot1,Screenshot2,Screenshot3],
+        category: "Men",
+        subCaegory: "T-shirt",
+        size: ["S","M","L","XL"],
+        Date: 1716634345444,
+        bestseller: true
+    },
+    {
+        _id: "xxy",
+        name: "T-shirt",
+        description:" This athletic long-sleeve top features a sleek, two-tone design with a light gray front and black sleeves and sides. It includes a high collar with a half-zip closure for adjustable ventilation and added style. Made from a form-fitting, stretchy fabric, this top is ideal for workouts, providing comfort and flexibility while highlighting the physique. The raglan sleeve design enhances mobility, making it perfect for running, training, or casual sporty wear.",
+        price:250,
+        image:[Screenshot4,Screenshot5,Screenshot6],
         category: "Men",
         subCaegory: "T-shirt",
         size: ["S","M","L","XL"],
