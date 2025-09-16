@@ -39,7 +39,8 @@ import menu from './projectimages/menu.png';
 import crosss from './projectimages/crosss.png';
 import star from './projectimages/star.png';
 import stardulll from './projectimages/stardulll.png';
-
+import aboutimg from './projectimages/aboutimg.jpg';
+import contactus from './projectimages/contactus.jpg';
 export const assets ={
     hii,
     stripe,
@@ -60,6 +61,8 @@ export const assets ={
     cart,
     star,
     stardulll,
+    aboutimg,
+    contactus,
    
   Screenshot1,
   Screenshot2,
@@ -81,6 +84,7 @@ export const assets ={
   Screenshot18,
   Screenshot19,
   Screenshot20,
+ 
 }
 export const productScreenshots =[
     {
