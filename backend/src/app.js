@@ -7,7 +7,7 @@ const app=express();
 const allowedOrigin =
   process.env.NODE_ENV === "production"
     ? process.env.PROD_ORIGIN
-    : process.env.DEV_ORIGIN;
+    : process.env.DEV_ORIGIN.split(",");
 
 app.use(cors({
   origin: allowedOrigin,
