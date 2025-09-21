@@ -11,6 +11,7 @@ const Login = ({ setToken }) => {
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     setLoading(true);
+    
     try {
       const response = await axios.post(
         `${backendUrl}/api/v1/user/login`,
@@ -18,17 +19,43 @@ const Login = ({ setToken }) => {
         { withCredentials: true }
       );
 
+      // ✅ Debug: Log the full response to see the structure
+      console.log('Full login response:', response.data);
+
       if (response.data.success) {
-        const token = response.data.token;
-        setToken(token);                      // lift token state up
-        localStorage.setItem('token', token); // persist token
-        toast.success('Login successful!');
+        // ✅ Try multiple possible token locations
+        let token = null;
+        
+        // Check common token locations
+        if (response.data.data && response.data.data.token) {
+          token = response.data.data.token;
+        } else if (response.data.token) {
+          token = response.data.token;
+        } else if (response.data.data && response.data.data.accessToken) {
+          token = response.data.data.accessToken;
+        } else if (response.data.accessToken) {
+          token = response.data.accessToken;
+        }
+
+        console.log('Extracted token:', token);
+
+        if (token) {
+          setToken(token);
+          localStorage.setItem('token', token);
+          toast.success('Login successful!');
+        } else {
+          console.log('Response structure:', Object.keys(response.data));
+          if (response.data.data) {
+            console.log('Data structure:', Object.keys(response.data.data));
+          }
+          toast.error('No token found in response');
+        }
       } else {
         toast.error(response.data.message || 'Login failed');
       }
     } catch (error) {
-      console.error(error);
-      toast.error(error.response?.data?.message || error.message || 'Something went wrong');
+      console.error('Login error:', error);
+      toast.error(error.response?.data?.message || error.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -64,7 +91,7 @@ const Login = ({ setToken }) => {
             />
           </div>
           <button
-            className="mt-2 w-full py-2 px-4 rounded-md text-white bg-black disabled:opacity-60"
+            className="mt-2 w-full py-2 px-4 rounded-md text-white bg-black disabled:opacity-60 hover:bg-gray-800 transition-colors"
             type="submit"
             disabled={loading}
           >
