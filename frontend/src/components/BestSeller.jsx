@@ -1,15 +1,18 @@
-import React,{useContext,useEffect,useState} from 'react'
-import { ShopContext } from '../context/ShopContex';
+import { useContext, useState, useEffect } from "react";
+import { ShopContext } from "../context/ShopContex";  // ✅ check spelling (Contex vs Context)
 import Title from './Title';
 import ProductItem from './ProductItem';
 
 const BestSeller = () => {
     const {productScreenshots}=useContext(ShopContext);
     const [bestSeller,setBestSeller]=useState([]);
-    useEffect(()=>{
-        const bestProducts=productScreenshots.filter((item)=>(item.bestseller));
-        setBestSeller(bestProducts.slice(0,3))
-    },[])
+    useEffect(() => {
+    if (Array.isArray(productScreenshots)) {
+    const bestProducts = productScreenshots.filter((item) => item.bestseller);
+    setBestSeller(bestProducts.slice(0, 3));
+  }
+}, [productScreenshots]);
+
   return (
    <div className='my-10'>
         <div className='text-center py-8 text-3xl'>
