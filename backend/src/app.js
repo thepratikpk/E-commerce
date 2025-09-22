@@ -31,5 +31,30 @@ app.use('/api/v1/product',productRouter)
 app.use('/api/v1/cart',cartRouter)
 app.use('/api/v1/order',orderRouter)
 
+// Global error handling middleware
+app.use((err, req, res, next) => {
+  // If error is already handled, pass it on
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  // Default error values
+  let statusCode = err.statusCode || 500;
+  let message = err.message || 'Internal Server Error';
+  let success = false;
+
+  // Log error in development
+  if (process.env.NODE_ENV === 'development') {
+    console.error('Error:', err);
+  }
+
+  // Send JSON error response
+  res.status(statusCode).json({
+    success,
+    message,
+    statusCode,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+});
 
 export {app}
