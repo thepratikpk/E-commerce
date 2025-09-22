@@ -1,16 +1,19 @@
-import {createContext,useEffect,useState} from "react";
-import { productScreenshots } from "../assets/assets";
+import {createContext,useEffect,useState} from "react"; 
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import axios from 'axios'
+
 
 
 export const ShopContext = createContext();
 const ShopContextProvider = (props) => {
     const currency='₹';
     const delivery=10;
+    const backendUrl=import.meta.env.VITE_BACKEND_URL
     const [search,setSearch]=useState('');
     const [showSearch,setShowSearch]=useState(false);
     const [cartItems,setCartItems]=useState({});
+    const [productScreenshots,setProductScreenshots]=useState([])
     const navigate=useNavigate();
 
     const addToCart=async (itemId,size)=>{
@@ -69,12 +72,42 @@ const ShopContextProvider = (props) => {
         cartData[itemId][size]=quantity;
         setCartItems(cartData);
     }
+    useEffect(()=>{
+        const fetchProducts = async () => {
+      try {
+        const res = await fetch(`${backendUrl}/api/v1/products`);
+        const data = await res.json();
+
+        // ✅ Fix images here
+        const fixedProducts = data.map((item) => ({
+          ...item,
+          image: Array.isArray(item.image)
+            ? item.image.map((img) =>
+                img.startsWith("http") ? img : `${backendUrl}/uploads/${img}`
+              )
+            : item.image
+            ? item.image.startsWith("http")
+              ? item.image
+              : `${backendUrl}/uploads/${item.image}`
+            : "https://via.placeholder.com/100.png",
+        }));
+
+        setProductScreenshots(fixedProducts);
+      } catch (err) {
+        console.error("Error fetching products:", err);
+      }
+    };
+
+    fetchProducts();
+    },[]);
+
+    
     const value ={
         productScreenshots,currency,delivery,
         search,setSearch,showSearch,setShowSearch,
         cartItems,addToCart,
         getCartCount,updateQuantity,
-        getCartAmount,navigate
+        getCartAmount,navigate,backendUrl
     }
     return(
         <ShopContext.Provider value={value}>
