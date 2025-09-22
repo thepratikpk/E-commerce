@@ -1,10 +1,11 @@
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asynchandler.js";
 
 
 const addToCart = asyncHandler(async (req, res) => {
-    
+
     const { itemId, size } = req.body;
     if (!itemId || !size) {
         throw new ApiError(400, "Item ID and size are required to add to cart.");
@@ -25,12 +26,12 @@ const addToCart = asyncHandler(async (req, res) => {
         { new: true, runValidators: true }
     ).select("cartData");
 
-    
+
     if (!updatedUser) {
         throw new ApiError(404, "User not found");
     }
 
-    
+
     return res
         .status(200)
         .json(new ApiResponse(
@@ -41,13 +42,13 @@ const addToCart = asyncHandler(async (req, res) => {
 });
 
 const updateCart = asyncHandler(async (req, res) => {
-    
+
     const { itemId, size, quantity } = req.body;
     if (!itemId || !size || quantity === undefined) {
         throw new ApiError(400, "Item ID, size, and quantity are required.");
     }
-    
-    
+
+
     if (quantity < 0) {
         throw new ApiError(400, "Quantity cannot be a negative number.");
     }
@@ -56,7 +57,7 @@ const updateCart = asyncHandler(async (req, res) => {
 
     // 2. Construct the key path for the nested field.
     const keyPath = `cartData.${itemId}.${size}`;
-    
+
     // 3. Perform a single, atomic database update using $set on the nested field.
     const updatedUser = await User.findByIdAndUpdate(
         userId,
@@ -64,7 +65,7 @@ const updateCart = asyncHandler(async (req, res) => {
         { new: true }
     ).select("cartData");
 
-   
+
     if (!updatedUser) {
         throw new ApiError(404, "User not found.");
     }
@@ -82,15 +83,15 @@ const updateCart = asyncHandler(async (req, res) => {
 const getUserCart = asyncHandler(async (req, res) => {
     const userId = req.user._id;
 
-   
+
     const user = await User.findById(userId).select("cartData");
 
-    
+
     if (!user) {
         throw new ApiError(404, "User not found");
     }
 
-    
+
     return res
         .status(200)
         .json(new ApiResponse(
