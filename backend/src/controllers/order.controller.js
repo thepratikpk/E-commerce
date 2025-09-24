@@ -2,12 +2,13 @@
 import { Order } from "../models/order.model.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asynchandler.js";
 import Stripe from 'stripe'
 
 const deliveryCharge = process.env.DELIVERY_CHARGE || 10; // Use a default value
 const currency = process.env.CURRENCY || 'inr';
-const stripe=new Stripe(process.env.STRIP_SECRET_KEY)
+const stripe = new Stripe(process.env.STRIP_SECRET_KEY)
 
 const placeOrder = asyncHandler(async (req, res) => {
     const { items, amount, address, paymentMethod } = req.body;
@@ -22,7 +23,7 @@ const placeOrder = asyncHandler(async (req, res) => {
         items,
         amount,
         address,
-        paymentMethod:"COD",
+        paymentMethod: "COD",
         status: 'pending',
         payment: false
     });
@@ -41,12 +42,30 @@ const placeOrderStripe = asyncHandler(async (req, res) => {
     const userId = req.user._id;
     const { items, address } = req.body;
 
-    const frontendUrl = process.env.NODE_ENV === 'production' 
-        ? process.env.PROD_ORIGIN 
-        : process.env.DEV_ORIGIN;
+    // Handle multiple URLs in DEV_ORIGIN, pick the first one for Stripe
+    let frontendUrl;
+    if (process.env.NODE_ENV === 'production') {
+        frontendUrl = process.env.PROD_ORIGIN;
+    } else {
+        // For development, take the first URL from comma-separated list
+        const devOrigins = process.env.DEV_ORIGIN?.split(',');
+        frontendUrl = devOrigins?.[0]?.trim() || 'http://localhost:5175';
+    }
+    
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    console.log('DEV_ORIGIN:', process.env.DEV_ORIGIN);
+    console.log('PROD_ORIGIN:', process.env.PROD_ORIGIN);
+    console.log('Frontend URL for Stripe:', frontendUrl);
+    console.log('Frontend URL type:', typeof frontendUrl);
+    console.log('Frontend URL length:', frontendUrl?.length);
+    
     // We don't need the `amount` from the client; we'll calculate it securely on the server.
     if (!items || items.length === 0 || !address) {
         throw new ApiError(400, "Items and address are required.");
+    }
+    
+    if (!frontendUrl || frontendUrl.trim() === '') {
+        throw new ApiError(400, "Frontend URL not configured properly");
     }
 
     try {
@@ -87,9 +106,19 @@ const placeOrderStripe = asyncHandler(async (req, res) => {
         });
 
         // Create the Stripe Checkout Session.
+        const successUrl = `${frontendUrl}/verify?success=true&orderId=${order._id}`;
+        const cancelUrl = `${frontendUrl}/verify?success=false&orderId=${order._id}`;
+        
+        console.log('=== STRIPE URL DEBUG ===');
+        console.log('Raw frontendUrl:', JSON.stringify(frontendUrl));
+        console.log('Success URL:', JSON.stringify(successUrl));
+        console.log('Cancel URL:', JSON.stringify(cancelUrl));
+        console.log('Order ID:', order._id);
+        console.log('========================');
+        
         const session = await stripe.checkout.sessions.create({
-            success_url: `${frontendUrl}/verify?success=true&orderId=${order._id}`,
-            cancel_url: `${frontendUrl}/verify?success=false&orderId=${order._id}`,
+            success_url: successUrl,
+            cancel_url: cancelUrl,
             line_items,
             mode: 'payment',
             metadata: {
@@ -101,7 +130,7 @@ const placeOrderStripe = asyncHandler(async (req, res) => {
         await Order.findByIdAndUpdate(order._id, { stripeSessionId: session.id });
 
         // Do NOT clear the cart here. This must happen on a webhook.
-        
+
         return res
             .status(200)
             .json(new ApiResponse(200, { session_url: session.url }, "Stripe session created. Redirecting to checkout..."));
@@ -112,16 +141,43 @@ const placeOrderStripe = asyncHandler(async (req, res) => {
     }
 });
 
-const verifyStripe=asyncHandler(async(req,res)=>{
-    const{orderId,success}=req.body
-    const userId=req.user._id
-    if(success === "true"){
-        await Order.findByIdAndUpdate(orderId,{payment:true})
-        await User.findByIdAndUpdate(userId,{cartData:{}})
-        res.json({success:true})
-    }else{
-        await Order.findByIdAndDelete(orderId)
-        res.json({success:false})
+const verifyStripe = asyncHandler(async (req, res) => {
+    const { orderId, success } = req.body;
+    const userId = req.user._id;
+    
+    console.log('Verify Stripe called with:', { orderId, success, userId });
+    
+    if (!orderId) {
+        throw new ApiError(400, "Order ID is required");
+    }
+    
+    // Check if order exists
+    const order = await Order.findById(orderId);
+    if (!order) {
+        throw new ApiError(404, "Order not found");
+    }
+    
+    // Check if order belongs to the user
+    if (order.userId.toString() !== userId.toString()) {
+        throw new ApiError(403, "Unauthorized access to order");
+    }
+    
+    if (success === "true") {
+        await Order.findByIdAndUpdate(orderId, { 
+            payment: true,
+            status: 'processing'
+        });
+        await User.findByIdAndUpdate(userId, { cartData: {} });
+        
+        return res
+            .status(200)
+            .json(new ApiResponse(200, null, "Payment verified successfully"));
+    } else {
+        await Order.findByIdAndDelete(orderId);
+        
+        return res
+            .status(200)
+            .json(new ApiResponse(200, null, "Payment cancelled, order deleted"));
     }
 })
 
@@ -132,8 +188,8 @@ const handleStripeWebhook = asyncHandler(async (req, res) => {
 
     try {
         event = stripe.webhooks.constructEvent(
-            req.body, 
-            sig, 
+            req.body,
+            sig,
             process.env.STRIPE_WEBHOOK_SECRET
         );
     } catch (err) {
@@ -151,7 +207,7 @@ const handleStripeWebhook = asyncHandler(async (req, res) => {
         if (!order) {
             throw new ApiError(404, "Order not found");
         }
-        
+
         // Ensure the order has not already been paid
         if (order.payment) {
             return res.status(200).send("Order already paid");
@@ -173,9 +229,7 @@ const handleStripeWebhook = asyncHandler(async (req, res) => {
     // Return a 200 response to Stripe to acknowledge the event
     res.status(200).json({ received: true });
 });
-const placeOrderRazorpay=asyncHandler(async(req,res)=>{
-    
-})
+
 
 const allOrders = asyncHandler(async (req, res) => {
     const orders = await Order.find().populate({
@@ -183,7 +237,7 @@ const allOrders = asyncHandler(async (req, res) => {
         select: 'name email phoneNo'
     }).populate({
         path: 'items.productId',
-        select: 'name price'
+        select: 'name price images'
     });
 
     if (!orders || orders.length === 0) {
@@ -198,7 +252,7 @@ const allOrders = asyncHandler(async (req, res) => {
 const userOrders = asyncHandler(async (req, res) => {
     const orders = await Order.find({ userId: req.user._id }).populate({
         path: 'items.productId',
-        select: 'name price'
+        select: 'name price images'
     });
 
     if (!orders || orders.length === 0) {
@@ -237,7 +291,7 @@ const updateStatus = asyncHandler(async (req, res) => {
 export {
     placeOrder,
     placeOrderStripe,
-    placeOrderRazorpay,
+
     allOrders,
     userOrders,
     updateStatus,

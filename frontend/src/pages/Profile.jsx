@@ -1,14 +1,16 @@
-import React, { useContext, useState } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import { ShopContext } from '../context/ShopContex'
 import Title from '../components/Title'
-import { authAPI } from '../utils/api'
+import { authAPI, orderAPI } from '../utils/api'
 import toast from '../utils/toast'
 
 const Profile = () => {
-  const { user, logout, authLoading, checkAuthStatus } = useContext(ShopContext);
+  const { user, logout, authLoading, checkAuthStatus, currency } = useContext(ShopContext);
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -108,6 +110,47 @@ const Profile = () => {
       setLoading(false);
     }
   };
+
+  const loadOrders = async () => {
+    try {
+      setOrdersLoading(true);
+      const response = await orderAPI.getUserOrders();
+      
+      if (response.success) {
+        setOrders(response.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to load orders:', error);
+      toast.error('Failed to load orders');
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
+  const getProductImage = (productData) => {
+    try {
+      if (productData && typeof productData === 'object') {
+        // Product data is populated from backend
+        const images = productData.images;
+        
+        if (Array.isArray(images) && images.length > 0) {
+          return images[0];
+        } else if (images) {
+          return images;
+        }
+      }
+    } catch (error) {
+      console.error('Error getting product image:', error);
+    }
+    return null;
+  };
+
+  // Load orders when switching to orders tab
+  useEffect(() => {
+    if (activeTab === 'orders' && user) {
+      loadOrders();
+    }
+  }, [activeTab, user]);
 
   return (
     <div className='border-t pt-14'>
@@ -309,15 +352,79 @@ const Profile = () => {
       {activeTab === 'orders' && (
         <div>
           <h3 className='text-lg font-medium text-gray-700 mb-6'>Order History</h3>
-          <div className='bg-gray-50 border border-gray-200 rounded-lg p-8 text-center'>
-            <p className='text-gray-600 mb-4'>No orders found</p>
-            <button 
-              onClick={() => window.location.href = '/collection'}
-              className='border border-black px-6 py-2 text-sm hover:bg-black hover:text-white transition-all duration-300'
-            >
-              Start Shopping
-            </button>
-          </div>
+          
+          {ordersLoading ? (
+            <div className='text-center py-8'>
+              <p className='text-gray-500'>Loading your orders...</p>
+            </div>
+          ) : orders.length === 0 ? (
+            <div className='bg-gray-50 border border-gray-200 rounded-lg p-8 text-center'>
+              <p className='text-gray-600 mb-4'>No orders found</p>
+              <button 
+                onClick={() => window.location.href = '/collection'}
+                className='border border-black px-6 py-2 text-sm hover:bg-black hover:text-white transition-all duration-300'
+              >
+                Start Shopping
+              </button>
+            </div>
+          ) : (
+            <div className='space-y-4'>
+              {orders.slice(0, 3).map((order) => (
+                <div key={order._id} className='border border-gray-200 p-4'>
+                  <div className='flex justify-between items-center mb-3'>
+                    <div>
+                      <p className='font-medium'>Order #{order._id.slice(-8)}</p>
+                      <p className='text-sm text-gray-500'>
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className='text-right'>
+                      <p className='font-medium'>{currency}{order.amount}</p>
+                      <span className={`text-xs px-2 py-1 rounded ${order.payment ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                        {order.payment ? 'Paid' : 'Pending'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className='flex items-center gap-3'>
+                    {order.items.slice(0, 3).map((item, idx) => {
+                      const productImage = getProductImage(item.productId);
+                      return (
+                        <div key={idx} className='flex items-center gap-2'>
+                          {productImage ? (
+                            <img 
+                              src={productImage} 
+                              alt={item.productName}
+                              className='w-10 h-10 object-cover border'
+                            />
+                          ) : (
+                            <div className='w-10 h-10 bg-gray-100 border flex items-center justify-center text-xs text-gray-400'>
+                              No Img
+                            </div>
+                          )}
+                          <span className='text-sm text-gray-600'>{item.quantity}x</span>
+                        </div>
+                      );
+                    })}
+                    {order.items.length > 3 && (
+                      <span className='text-sm text-gray-500'>+{order.items.length - 3} more</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              
+              {orders.length > 3 && (
+                <div className='text-center pt-4'>
+                  <button 
+                    onClick={() => window.location.href = '/order'}
+                    className='border border-black px-6 py-2 text-sm hover:bg-black hover:text-white transition-all duration-300'
+                  >
+                    View All Orders
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

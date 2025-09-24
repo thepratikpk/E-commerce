@@ -21,6 +21,16 @@ const ShopContextProvider = (props) => {
       console.log('Cart items changed:', cartItems, 'Count:', Object.keys(cartItems).length);
     }
   }, [cartItems]);
+
+  // Debug: Log products when they change
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('=== DEBUG: Products loaded:', productScreenshots.length);
+      if (productScreenshots.length > 0) {
+        console.log('=== DEBUG: First product:', productScreenshots[0]);
+      }
+    }
+  }, [productScreenshots]);
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
@@ -191,18 +201,23 @@ const ShopContextProvider = (props) => {
 
   const clearCart = async () => {
     try {
+      // Clear cart immediately in frontend first
+      setCartItems({});
+      localStorage.removeItem('cartItems');
+      
       if (isAuthenticated) {
         const response = await cartAPI.clearCart();
         if (response.success) {
-          setCartItems({});
+          console.log('Cart cleared successfully on backend');
           toast.success(response.message || 'Cart cleared');
+        } else {
+          console.error('Failed to clear cart on backend:', response.message);
         }
       } else {
-        setCartItems({});
-        localStorage.removeItem('cartItems');
         toast.success('Cart cleared');
       }
     } catch (error) {
+      console.error('Error clearing cart:', error);
       toast.error(error.message || "Failed to clear cart");
     }
   };
@@ -350,6 +365,7 @@ const ShopContextProvider = (props) => {
     setShowSearch,
     cartItems,
     addToCart,
+    setCartItems,
     getCartCount,
     updateQuantity,
     getCartAmount,

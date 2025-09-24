@@ -1,0 +1,86 @@
+import React, { useContext, useEffect, useState } from 'react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
+import { ShopContext } from '../context/ShopContex'
+import { orderAPI } from '../utils/api'
+import toast from '../utils/toast'
+
+const Verify = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { isAuthenticated, clearCart } = useContext(ShopContext);
+  const [verifying, setVerifying] = useState(true);
+
+  useEffect(() => {
+    const verifyPayment = async () => {
+      const success = searchParams.get('success');
+      const orderId = searchParams.get('orderId');
+
+      console.log('Verify page - URL params:', { success, orderId });
+      console.log('Verify page - isAuthenticated:', isAuthenticated);
+
+      if (!isAuthenticated) {
+        console.log('User not authenticated, redirecting to login');
+        navigate('/login');
+        return;
+      }
+
+      if (!orderId) {
+        console.log('No order ID found in URL');
+        toast.error('Invalid verification link');
+        navigate('/');
+        return;
+      }
+
+      try {
+        console.log('Calling verifyStripe API with:', { orderId, success });
+        const response = await orderAPI.verifyStripe(orderId, success);
+        console.log('VerifyStripe response:', response);
+        
+        if (response.success) {
+          if (success === 'true') {
+            toast.success('Payment successful! Your order has been confirmed.');
+            await clearCart(); // Clear cart after successful payment
+            navigate('/order');
+          } else {
+            toast.error('Payment was cancelled or failed.');
+            navigate('/cart');
+          }
+        } else {
+          console.log('Verification failed:', response);
+          toast.error('Payment verification failed');
+          navigate('/cart');
+        }
+      } catch (error) {
+        console.error('Payment verification error:', error);
+        toast.error(`Payment verification failed: ${error.message || 'Unknown error'}`);
+        navigate('/cart');
+      } finally {
+        setVerifying(false);
+      }
+    };
+
+    verifyPayment();
+  }, [searchParams, navigate, isAuthenticated, clearCart]);
+
+  if (verifying) {
+    return (
+      <div className='border-t pt-14'>
+        <div className='text-center py-20'>
+          <div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black mb-4'></div>
+          <p className='text-gray-600'>Verifying your payment...</p>
+          <p className='text-sm text-gray-500 mt-2'>Please do not close this page</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className='border-t pt-14'>
+      <div className='text-center py-20'>
+        <p className='text-gray-600'>Redirecting...</p>
+      </div>
+    </div>
+  );
+};
+
+export default Verify;
