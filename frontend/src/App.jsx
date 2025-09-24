@@ -10,6 +10,7 @@ import Login from './pages/login'
 import Profile from './pages/Profile'
 import Placeorder from './pages/Placeorder'
 import Order from './pages/Order'
+import Verify from './pages/Verify'
 import NotFound from './pages/NotFound'
 import ErrorBoundary from './components/ErrorBoundary'
 import Navbar from './components/Navbar'
@@ -38,8 +39,17 @@ const App = () => {
                 <Profile />
               </ProtectedRoute>
             } />
-            <Route path='/placeorder' element={<Placeorder />} />
-            <Route path='/order' element={<Order />} />
+            <Route path='/placeorder' element={
+              <ProtectedRoute>
+                <Placeorder />
+              </ProtectedRoute>
+            } />
+            <Route path='/order' element={
+              <ProtectedRoute>
+                <Order />
+              </ProtectedRoute>
+            } />
+            <Route path='/verify' element={<Verify />} />
             {/* 404 Route - Must be last */}
             <Route path='*' element={<NotFound />} />
           </Routes>

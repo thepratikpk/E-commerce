@@ -35,20 +35,20 @@ const userSchema = new mongoose.Schema({
         type: String,
 
     },
-    address:[addressSchema],
+    address: [addressSchema],
     cartData: {
         type: Object,
         default: {}
     },
     role: {
-            type: String,
-            enum: ['user','admin'],
-            default: 'user'
-        },
-    refreshToken:{
-        type:String
+        type: String,
+        enum: ['user', 'admin'],
+        default: 'user'
     },
-    
+    refreshToken: {
+        type: String
+    },
+
     googleId: {
         type: String,
         unique: true,
@@ -103,4 +103,4 @@ userSchema.methods.generateRefreshToken = function () {
 }
 
 
-export const User=mongoose.model("User",userSchema)
+export const User = mongoose.model("User", userSchema)

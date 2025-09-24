@@ -2,7 +2,7 @@ const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001'
 
 export const apiCall = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   const defaultOptions = {
     headers: {
       'Content-Type': 'application/json',
@@ -14,7 +14,7 @@ export const apiCall = async (endpoint, options = {}) => {
 
   try {
     const response = await fetch(url, config);
-    
+
     // Try to parse JSON response
     let data;
     try {
@@ -30,14 +30,14 @@ export const apiCall = async (endpoint, options = {}) => {
       // If JSON parsing fails, create a generic error
       data = { message: `Server returned ${response.status}: ${response.statusText}` };
     }
-    
+
     if (!response.ok) {
       const error = new Error(data.message || 'API request failed');
       error.status = response.status;
       error.data = data;
       throw error;
     }
-    
+
     return data;
   } catch (error) {
     // Add status code to network errors
@@ -45,35 +45,35 @@ export const apiCall = async (endpoint, options = {}) => {
       error.status = 0; // Network error
       error.message = 'Network error. Please check your connection and try again.';
     }
-    
+
     // Only log non-401 errors to reduce console noise
     if (!error.message?.includes('401') && !error.message?.includes('Unauthorized')) {
       console.error('API Error:', error);
     }
-    
+
     throw error;
   }
 };
 
 export const authAPI = {
-  login: (credentials) => 
+  login: (credentials) =>
     apiCall('/api/v1/user/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     }),
-  
-  register: (userData) => 
+
+  register: (userData) =>
     apiCall('/api/v1/user/register', {
       method: 'POST',
       body: JSON.stringify(userData),
     }),
-  
-  logout: () => 
+
+  logout: () =>
     apiCall('/api/v1/user/logout', {
       method: 'POST',
     }),
-  
-  getCurrentUser: () => 
+
+  getCurrentUser: () =>
     apiCall('/api/v1/user/me'),
 
   updateAccount: (userData) =>
@@ -119,5 +119,28 @@ export const cartAPI = {
   clearCart: () =>
     apiCall('/api/v1/cart/clear', {
       method: 'DELETE',
+    }),
+};
+
+export const orderAPI = {
+  placeOrder: (orderData) =>
+    apiCall('/api/v1/order/place', {
+      method: 'POST',
+      body: JSON.stringify(orderData),
+    }),
+
+  placeOrderStripe: (orderData) =>
+    apiCall('/api/v1/order/stripe', {
+      method: 'POST',
+      body: JSON.stringify(orderData),
+    }),
+
+  getUserOrders: () =>
+    apiCall('/api/v1/order/userorders'),
+
+  verifyStripe: (orderId, success) =>
+    apiCall('/api/v1/order/verifyStripe', {
+      method: 'POST',
+      body: JSON.stringify({ orderId, success }),
     }),
 };
