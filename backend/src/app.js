@@ -14,6 +14,25 @@ app.use(cors({
   credentials: true
 }));
 
+// Add middleware to handle different authentication contexts
+app.use((req, res, next) => {
+  // Log request details for debugging
+  const userAgent = req.get('User-Agent') || '';
+  const referer = req.get('Referer') || '';
+  const isAdminRequest = referer.includes(':5174') || referer.includes('admin') || req.path.includes('/admin');
+  
+  console.log('🌐 Request:', {
+    path: req.path,
+    method: req.method,
+    isAdmin: isAdminRequest,
+    referer: referer,
+    hasAuthHeader: !!req.get('Authorization'),
+    hasCookies: !!req.cookies?.accessToken
+  });
+  
+  next();
+});
+
 app.use(express.json())
 app.use(express.urlencoded({extended:true,limit:"16kb"}))
 app.use(express.static("public"))
