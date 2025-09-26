@@ -225,13 +225,16 @@ const ShopContextProvider = (props) => {
   // Authentication functions
   const checkAuthStatus = async () => {
     if (skipAuthCheck) {
+      console.log('🔐 Skipping auth check');
       setAuthLoading(false);
       return;
     }
     
+    console.log('🔐 Checking auth status...');
     try {
       const response = await authAPI.getCurrentUser();
       if (response.success) {
+        console.log('🔐 Auth successful:', { id: response.data._id, name: response.data.name, email: response.data.email });
         setUser(response.data);
         setIsAuthenticated(true);
         setSkipAuthCheck(false);
@@ -239,6 +242,7 @@ const ShopContextProvider = (props) => {
         await loadUserCart();
       }
     } catch (error) {
+      console.log('🔐 Auth failed:', error.message);
       // Only log error if it's not a 401 (which is expected when not logged in)
       if (error.message && !error.message.includes('401') && !error.message.includes('Unauthorized')) {
         console.error('Auth check error:', error);
@@ -344,8 +348,18 @@ const ShopContextProvider = (props) => {
 
   // Check authentication status on app load
   useEffect(() => {
+    console.log('🚀 App starting - checking auth status');
     checkAuthStatus();
   }, []);
+
+  // Debug user changes
+  useEffect(() => {
+    if (user) {
+      console.log('👤 User changed to:', { id: user._id, name: user.name, email: user.email });
+    } else {
+      console.log('👤 User cleared/logged out');
+    }
+  }, [user]);
 
   // Load cart from localStorage for non-authenticated users on app start
   useEffect(() => {

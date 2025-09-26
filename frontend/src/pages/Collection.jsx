@@ -120,6 +120,15 @@ const Collection = () => {
               />{" "}
               Women
             </p>
+             <p className="flex gap-2">
+              <input
+                type="checkbox"
+                className="w-3"
+                value={"Children"}
+                onChange={toggleCategory}
+              />{" "}
+              children
+            </p>
           </div>
         </div>
 

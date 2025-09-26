@@ -51,19 +51,19 @@ const placeOrderStripe = asyncHandler(async (req, res) => {
         const devOrigins = process.env.DEV_ORIGIN?.split(',');
         frontendUrl = devOrigins?.[0]?.trim() || 'http://localhost:5175';
     }
-    
+
     console.log('NODE_ENV:', process.env.NODE_ENV);
     console.log('DEV_ORIGIN:', process.env.DEV_ORIGIN);
     console.log('PROD_ORIGIN:', process.env.PROD_ORIGIN);
     console.log('Frontend URL for Stripe:', frontendUrl);
     console.log('Frontend URL type:', typeof frontendUrl);
     console.log('Frontend URL length:', frontendUrl?.length);
-    
+
     // We don't need the `amount` from the client; we'll calculate it securely on the server.
     if (!items || items.length === 0 || !address) {
         throw new ApiError(400, "Items and address are required.");
     }
-    
+
     if (!frontendUrl || frontendUrl.trim() === '') {
         throw new ApiError(400, "Frontend URL not configured properly");
     }
@@ -108,14 +108,14 @@ const placeOrderStripe = asyncHandler(async (req, res) => {
         // Create the Stripe Checkout Session.
         const successUrl = `${frontendUrl}/verify?success=true&orderId=${order._id}`;
         const cancelUrl = `${frontendUrl}/verify?success=false&orderId=${order._id}`;
-        
+
         console.log('=== STRIPE URL DEBUG ===');
         console.log('Raw frontendUrl:', JSON.stringify(frontendUrl));
         console.log('Success URL:', JSON.stringify(successUrl));
         console.log('Cancel URL:', JSON.stringify(cancelUrl));
         console.log('Order ID:', order._id);
         console.log('========================');
-        
+
         const session = await stripe.checkout.sessions.create({
             success_url: successUrl,
             cancel_url: cancelUrl,
@@ -144,37 +144,37 @@ const placeOrderStripe = asyncHandler(async (req, res) => {
 const verifyStripe = asyncHandler(async (req, res) => {
     const { orderId, success } = req.body;
     const userId = req.user._id;
-    
+
     console.log('Verify Stripe called with:', { orderId, success, userId });
-    
+
     if (!orderId) {
         throw new ApiError(400, "Order ID is required");
     }
-    
+
     // Check if order exists
     const order = await Order.findById(orderId);
     if (!order) {
         throw new ApiError(404, "Order not found");
     }
-    
+
     // Check if order belongs to the user
     if (order.userId.toString() !== userId.toString()) {
         throw new ApiError(403, "Unauthorized access to order");
     }
-    
+
     if (success === "true") {
-        await Order.findByIdAndUpdate(orderId, { 
+        await Order.findByIdAndUpdate(orderId, {
             payment: true,
             status: 'processing'
         });
         await User.findByIdAndUpdate(userId, { cartData: {} });
-        
+
         return res
             .status(200)
             .json(new ApiResponse(200, null, "Payment verified successfully"));
     } else {
         await Order.findByIdAndDelete(orderId);
-        
+
         return res
             .status(200)
             .json(new ApiResponse(200, null, "Payment cancelled, order deleted"));
@@ -250,15 +250,24 @@ const allOrders = asyncHandler(async (req, res) => {
 });
 
 const userOrders = asyncHandler(async (req, res) => {
+    console.log('🔍 UserOrders called for user:', req.user._id);
+
     const orders = await Order.find({ userId: req.user._id }).populate({
         path: 'items.productId',
         select: 'name price images'
     });
 
+    console.log('📦 Found orders:', orders.length);
+    orders.forEach((order, index) => {
+        console.log(`📋 Order ${index + 1}: ID=${order._id}, Status=${order.status}, Amount=${order.amount}`);
+    });
+
     if (!orders || orders.length === 0) {
+        console.log('❌ No orders found for user:', req.user._id);
         return res.status(200).json(new ApiResponse(200, [], "No orders found for this user"));
     }
 
+    console.log('✅ Returning orders to frontend');
     return res
         .status(200)
         .json(new ApiResponse(200, orders, "User orders fetched successfully"));
@@ -268,9 +277,18 @@ const updateStatus = asyncHandler(async (req, res) => {
     const { orderId } = req.params || req.body;
     const { status } = req.body;
 
+    console.log('🔄 UpdateStatus called:', { orderId, status });
+
     if (!status) {
         throw new ApiError(400, "Status is required");
     }
+
+    const orderBefore = await Order.findById(orderId);
+    console.log('📋 Order before update:', {
+        id: orderBefore?._id,
+        status: orderBefore?.status,
+        userId: orderBefore?.userId
+    });
 
     const order = await Order.findByIdAndUpdate(
         orderId,
@@ -281,6 +299,12 @@ const updateStatus = asyncHandler(async (req, res) => {
     if (!order) {
         throw new ApiError(404, "Order not found");
     }
+
+    console.log('✅ Order after update:', {
+        id: order._id,
+        status: order.status,
+        userId: order.userId
+    });
 
     return res
         .status(200)
