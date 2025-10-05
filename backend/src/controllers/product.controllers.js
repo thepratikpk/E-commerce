@@ -87,9 +87,47 @@ const getProcuctById=asyncHandler(async(req,res)=>{
     .status(200)
     .json(new ApiResponse(200,product,"Product is fethced by Id"))
 })
+
+const getRecommendedProducts = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+
+    try {
+        // Call your Python recommendation service API
+        const recommendationServiceUrl = `http://localhost:5001/recommendations/${userId}?n=10`;
+        const response = await axios.get(recommendationServiceUrl);
+
+        const { productIds } = response.data;
+
+        if (!productIds || productIds.length === 0) {
+            // Fallback: return bestsellers or recent products if no recommendations
+            const fallbackProducts = await Product.find({ bestseller: true }).limit(10);
+            return res.status(200).json(new ApiResponse(200, fallbackProducts, "No specific recommendations, returning bestsellers."));
+        }
+
+        // Fetch the full product details from your database
+        const recommendedProducts = await Product.find({
+            '_id': { $in: productIds }
+        });
+        
+        // Optional: Preserve the order from the recommendation service
+        const orderedProducts = productIds.map(id => 
+            recommendedProducts.find(p => p._id.toString() === id)
+        ).filter(p => p); // Filter out any nulls if a product was deleted
+
+
+        return res.status(200).json(new ApiResponse(200, orderedProducts, "Recommended products fetched successfully"));
+
+    } catch (error) {
+        console.error("Error fetching recommendations:", error.message);
+        // Implement a fallback strategy if the AI service is down
+        const fallbackProducts = await Product.find({ bestseller: true }).limit(10);
+        return res.status(200).json(new ApiResponse(200, fallbackProducts, "Could not fetch recommendations, returning bestsellers."));
+    }
+});
 export {
     addProduct,
     listProducts,
     removeProduct,
-    getProcuctById
+    getProcuctById,
+    getRecommendedProducts
 }

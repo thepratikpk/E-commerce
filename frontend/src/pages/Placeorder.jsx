@@ -3,7 +3,7 @@ import Title from '../components/Title';
 import CartTotal from '../components/CartTotal';
 import { assets } from '../assets/assets';
 import { ShopContext } from '../context/ShopContex';
-import { orderAPI } from '../utils/api';
+import { orderAPI, eventAPI } from '../utils/api';
 import toast from '../utils/toast';
 
 const Placeorder = () => {
@@ -154,6 +154,27 @@ const Placeorder = () => {
           response = await orderAPI.placeOrder(orderData);
           if (response.success) {
             toast.success(response.message || 'Order placed successfully!');
+            
+            // Log purchase events for each item
+            try {
+              for (const item of orderItems) {
+                await eventAPI.logEvent({
+                  productId: item.productId,
+                  action: 'purchase',
+                  userId: user?._id,
+                  value: item.quantity,
+                  metadata: { 
+                    size: item.size, 
+                    price: item.price,
+                    paymentMethod: 'COD',
+                    orderId: response.data?._id
+                  }
+                }, token);
+              }
+            } catch (eventError) {
+              console.error('Failed to log purchase events:', eventError);
+            }
+            
             // Clear cart after successful order
             try {
               await clearCart();

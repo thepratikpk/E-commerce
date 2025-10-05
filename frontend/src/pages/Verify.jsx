@@ -1,13 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContex'
-import { orderAPI } from '../utils/api'
+import { orderAPI, eventAPI } from '../utils/api'
 import toast from '../utils/toast'
 
 const Verify = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { isAuthenticated, clearCart } = useContext(ShopContext);
+  const { isAuthenticated, clearCart, user, token } = useContext(ShopContext);
   const [verifying, setVerifying] = useState(true);
 
   useEffect(() => {
@@ -39,6 +39,22 @@ const Verify = () => {
         if (response.success) {
           if (success === 'true') {
             toast.success('Payment successful! Your order has been confirmed.');
+            
+            // Log purchase event for Stripe payment
+            try {
+              await eventAPI.logEvent({
+                action: 'purchase',
+                userId: user?._id,
+                metadata: { 
+                  paymentMethod: 'Stripe',
+                  orderId: orderId,
+                  success: true
+                }
+              }, token);
+            } catch (eventError) {
+              console.error('Failed to log Stripe purchase event:', eventError);
+            }
+            
             await clearCart(); // Clear cart after successful payment
             navigate('/order');
           } else {
