@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middlewares.js";
-import { addProduct, getProcuctById, listProducts, removeProduct } from "../controllers/product.controllers.js";
+import { addProduct, getProcuctById, getRecommendedProducts, listProducts, removeProduct } from "../controllers/product.controllers.js";
 import { authorizeRoles, verifyJWT } from "../middlewares/auth.middlewares.js";
 
 const router=Router()
@@ -12,4 +12,5 @@ router.route('/add').post(verifyJWT,authorizeRoles('admin'),upload.fields([
 router.route('/remove/:id').delete(verifyJWT,authorizeRoles('admin'),removeProduct)
 router.route('/list').get(listProducts)
 router.route('/:id').get(getProcuctById)
+router.route("/recommendations").get(verifyJWT, getRecommendedProducts);
 export default router

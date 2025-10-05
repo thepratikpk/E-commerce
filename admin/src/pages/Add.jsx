@@ -51,6 +51,14 @@ const Add = ({ token }) => {
 
       if (response.data.success) {
         toast.success(response.data.message)
+        
+        // Notify about ML model retraining
+        setTimeout(() => {
+          toast.info("💡 New product added! Consider retraining the ML model for better recommendations.", {
+            autoClose: 8000
+          })
+        }, 2000)
+        
         setName("")
         setDescription("")
         setImage1(false)

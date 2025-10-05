@@ -44,12 +44,13 @@ import userRouter from './routes/user.routes.js'
 import productRouter from './routes/product.routes.js'
 import cartRouter from './routes/cart.routes.js'
 import orderRouter from './routes/order.routes.js';
+import eventRoutes from './routes/event.routes.js'
 
 app.use('/api/v1/user',userRouter)
 app.use('/api/v1/product',productRouter)
 app.use('/api/v1/cart',cartRouter)
 app.use('/api/v1/order',orderRouter)
-
+app.use('/api/v1/events',eventRoutes)
 // Global error handling middleware
 app.use((err, req, res, next) => {
   // If error is already handled, pass it on
