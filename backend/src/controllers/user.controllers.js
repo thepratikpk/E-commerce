@@ -3,6 +3,7 @@ import { ApiError } from '../utils/ApiError.js'
 import { ApiResponse } from '../utils/ApiResponse.js'
 import { User } from "../models/user.model.js"
 import validator from 'validator'
+import jwt from 'jsonwebtoken'
 const generateRefreshAndAccessTokens = async (userId) => {
     try {
         const user = await User.findById(userId)
