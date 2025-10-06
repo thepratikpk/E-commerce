@@ -1,4 +1,7 @@
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+const API_BASE_URL =
+  import.meta.env.MODE === "production"
+    ? import.meta.env.VITE_BACKEND_URL
+    : "http://localhost:5001";
 
 export const apiCall = async (endpoint, options = {}, customBaseUrl = null) => {
   const baseUrl = customBaseUrl || API_BASE_URL;
