@@ -19,6 +19,8 @@ const ShopContextProvider = (props) => {
     const [authLoading, setAuthLoading] = useState(true);
     const [cartLoading, setCartLoading] = useState(false);
     const [skipAuthCheck, setSkipAuthCheck] = useState(false);
+    const [lastVisitedProduct, setLastVisitedProduct] = useState(null);
+    const [recentlyViewedProducts, setRecentlyViewedProducts] = useState([]);
     
     // State for the authentication token, initialized from localStorage
     const [token, setToken] = useState(localStorage.getItem("token"));
@@ -214,6 +216,36 @@ const ShopContextProvider = (props) => {
         }
     };
 
+    // Track product visits for better recommendations
+    const trackProductVisit = (product) => {
+        if (!product) return;
+        
+        // Update last visited product
+        setLastVisitedProduct(product);
+        
+        // Update recently viewed products (keep last 10)
+        setRecentlyViewedProducts(prev => {
+            const filtered = prev.filter(p => p._id !== product._id);
+            const updated = [product, ...filtered].slice(0, 10);
+            
+            // Store in localStorage for persistence
+            localStorage.setItem('recentlyViewedProducts', JSON.stringify(updated));
+            return updated;
+        });
+        
+        console.log('📍 Tracked product visit:', product.name);
+    };
+
+    // Get last visited product for recommendations
+    const getLastVisitedProduct = () => {
+        return lastVisitedProduct;
+    };
+
+    // Get recently viewed products
+    const getRecentlyViewedProducts = () => {
+        return recentlyViewedProducts;
+    };
+
     const checkAuthStatus = async () => {
         if (skipAuthCheck || !token) {
             setAuthLoading(false);
@@ -321,6 +353,23 @@ const ShopContextProvider = (props) => {
         fetchProducts();
     }, [backendUrl]);
 
+    // Load recently viewed products from localStorage on mount
+    useEffect(() => {
+        try {
+            const stored = localStorage.getItem('recentlyViewedProducts');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                setRecentlyViewedProducts(parsed);
+                if (parsed.length > 0) {
+                    setLastVisitedProduct(parsed[0]);
+                    console.log('📍 Loaded recently viewed products:', parsed.length);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading recently viewed products:', error);
+        }
+    }, []);
+
     useEffect(() => {
         checkAuthStatus();
     }, [token]);
@@ -359,6 +408,11 @@ const ShopContextProvider = (props) => {
         loadUserCart,
         syncLocalCartToBackend,
         clearCart,
+        trackProductVisit,
+        getLastVisitedProduct,
+        getRecentlyViewedProducts,
+        lastVisitedProduct,
+        recentlyViewedProducts,
         userId: user?._id,
         token,
     };

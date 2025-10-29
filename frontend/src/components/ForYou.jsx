@@ -5,7 +5,13 @@ import ProductItem from "./ProductItem";
 import { recommendationAPI } from "../utils/api";
 
 const ForYou = () => {
-  const { isAuthenticated, token, productScreenshots } = useContext(ShopContext);
+  const { 
+    isAuthenticated, 
+    token, 
+    productScreenshots, 
+    lastVisitedProduct, 
+    getRecentlyViewedProducts 
+  } = useContext(ShopContext);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,25 +45,62 @@ const ForYou = () => {
             }
           }
 
-          // If ML service returns recommendations but products not found locally
+          // If ML service returns empty (user has seen everything), use category-based
           if (data.success && data.recommendations && data.recommendations.length === 0) {
-            console.log("🎯 You've explored everything! Here are some favorites...");
-            // This shouldn't happen often, but just in case
-            const shuffledProducts = [...productScreenshots]
-              .sort(() => Math.random() - 0.5)
-              .slice(0, 8);
-            setRecommendedProducts(shuffledProducts);
+            console.log("🎯 Power user detected! Using category-based recommendations...");
+            // Skip recently viewed here since we have a separate section for that
+            // Fall through to category-based logic below
+          }
+        }
+        
+        // Enhanced fallback based on last visited product (for all users)
+        if (lastVisitedProduct) {
+          console.log("📍 Using last visited product for recommendations:", lastVisitedProduct.name);
+          
+          // Get products from same category as last visited
+          const sameCategoryProducts = productScreenshots.filter(product => 
+            product._id !== lastVisitedProduct._id && 
+            product.category === lastVisitedProduct.category
+          );
+          
+          // Get products from same subcategory
+          const sameSubCategoryProducts = productScreenshots.filter(product => 
+            product._id !== lastVisitedProduct._id && 
+            product.subCategory === lastVisitedProduct.subCategory
+          );
+          
+          // Combine and prioritize: same subcategory first, then same category, then others
+          const otherProducts = productScreenshots.filter(product => 
+            product._id !== lastVisitedProduct._id && 
+            product.category !== lastVisitedProduct.category &&
+            product.subCategory !== lastVisitedProduct.subCategory
+          );
+          
+          const combinedRecommendations = [
+            ...sameSubCategoryProducts.slice(0, 4),
+            ...sameCategoryProducts.slice(0, 3),
+            ...otherProducts.sort(() => Math.random() - 0.5).slice(0, 3)
+          ].slice(0, 10);
+          
+          if (combinedRecommendations.length > 0) {
+            setRecommendedProducts(combinedRecommendations);
+            setRecommendationMeta({ 
+              type: 'category-based', 
+              source: 'last-visited',
+              lastProduct: lastVisitedProduct.name 
+            });
             return;
           }
-        } else {
-          // Not authenticated - show popular/trending products
-          console.log("👤 Guest user - showing popular products");
-          const popularProducts = [...productScreenshots]
-            .sort(() => Math.random() - 0.5) // Could be enhanced with actual popularity metrics
-            .slice(0, 10);
-          
-          setRecommendedProducts(popularProducts);
         }
+        
+        // Final fallback - random popular products
+        console.log("🎲 Using random products as final fallback");
+        const fallbackProducts = [...productScreenshots]
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 10);
+        
+        setRecommendedProducts(fallbackProducts);
+        setRecommendationMeta({ type: 'random', source: 'fallback' });
 
       } catch (error) {
         console.error("❌ Recommendation service error:", error.message);
@@ -77,7 +120,7 @@ const ForYou = () => {
     if (productScreenshots.length > 0) {
       fetchRecommendations();
     }
-  }, [isAuthenticated, token, productScreenshots]);
+  }, [isAuthenticated, token, productScreenshots, lastVisitedProduct, getRecentlyViewedProducts]);
 
   // Don't show the section if there are no products at all
   if (!loading && recommendedProducts.length === 0) {
@@ -90,12 +133,18 @@ const ForYou = () => {
       <div className="text-center py-8">
         <Title text1="Just For" text2="You" />
         <p className="w-11/12 sm:w-3/4 mx-auto text-xs sm:text-sm md:text-base text-gray-600 mt-2">
-          {isAuthenticated ? (
+          {recommendationMeta?.type === 'category-based' && lastVisitedProduct ? (
+            <>Based on your interest in "{lastVisitedProduct.name}" and similar products</>
+          ) : recommendationMeta?.type === 'recently-viewed' ? (
+            <>Your recently viewed products</>
+          ) : isAuthenticated ? (
             recommendationMeta?.strategy_used === 'ml' ? (
-              <>Powered by AI - Personalized based on your shopping behavior</>
+              <>AI-powered recommendations just for you</>
             ) : (
               <>Curated picks based on shoppers with similar tastes</>
             )
+          ) : lastVisitedProduct ? (
+            <>More products like "{lastVisitedProduct.name}"</>
           ) : (
             <>Discover trending products - Sign in for personalized recommendations</>
           )}

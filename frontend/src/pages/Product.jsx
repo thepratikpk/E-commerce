@@ -8,7 +8,7 @@ import { eventAPI } from '../utils/api.js';
 
 const Product = () => {
     const { id } = useParams();
-    const { productScreenshots, currency, addToCart, isAuthenticated, navigate, userId, token } = useContext(ShopContext);
+    const { productScreenshots, currency, addToCart, isAuthenticated, navigate, userId, token, trackProductVisit } = useContext(ShopContext);
     const [productData, setProductData] = useState(null);
     const [image, setImage] = useState(null);
     const [size, setSize] = useState('');
@@ -24,9 +24,12 @@ const Product = () => {
 
     useEffect(() => {
         if (productData) {
+            // Track product visit for recommendations
+            trackProductVisit(productData);
+
             const logViewEvent = async () => {
                 try {
-                    // 2. Use the simplified and consistent API call
+                    // Log view event to backend for ML recommendations
                     const eventData = {
                         productId: productData._id,
                         action: 'view',
@@ -41,7 +44,7 @@ const Product = () => {
 
             logViewEvent();
         }
-    }, [productData, isAuthenticated, userId, token]);
+    }, [productData, isAuthenticated, userId, token, trackProductVisit]);
 
     if (!productData) return <div className='opacity-0'></div>;
 

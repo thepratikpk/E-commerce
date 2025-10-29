@@ -14,8 +14,8 @@ export const apiCall = async (endpoint, options = {}, customBaseUrl = null) => {
     credentials: 'include', // Include cookies for authentication
   };
 
-  const config = { 
-    ...defaultOptions, 
+  const config = {
+    ...defaultOptions,
     ...options,
     headers: {
       ...defaultOptions.headers,
