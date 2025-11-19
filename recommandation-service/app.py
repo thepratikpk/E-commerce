@@ -23,7 +23,6 @@ jwt = JWTManager(app)
 
 @jwt.invalid_token_loader
 def invalid_token_callback(error):
-    print(f"!!! JWT ERROR: {error} !!!")
     return jsonify({"success": False, "message": "Token is invalid.", "error_details": str(error)}), 422
 
 @jwt.unauthorized_loader
@@ -40,9 +39,7 @@ try:
     db = client['E-commerce']
     events_collection = db.events
     products_collection = db.products
-    print("✅ MongoDB connected successfully to 'E-commerce' database.")
 except Exception as e:
-    print(f"❌ Error connecting to MongoDB: {e}")
     events_collection = None
     products_collection = None
 
@@ -53,13 +50,7 @@ try:
     popular_products = joblib.load('popular_products.joblib')
     all_product_ids = metadata['product_ids']
     all_user_ids = metadata['user_ids']
-    print(f"✅ Model loaded successfully!")
-    print(f"   📦 {len(all_product_ids)} products in training data")
-    print(f"   👥 {len(all_user_ids)} users in training data")
-    print(f"   ⭐ {len(popular_products)} popular products cached")
 except FileNotFoundError as e:
-    print(f"❌ Model files not found: {e}")
-    print("   Please run 'python train.py' first to train the model.")
     model = None
     metadata = None
     popular_products = []
@@ -92,7 +83,6 @@ def get_user_interaction_history(user_id):
         
         return seen_products, product_scores
     except Exception as e:
-        print(f"❌ Error getting user history: {e}")
         return set(), {}
 
 def get_similar_user_recommendations(user_id, seen_products, limit=5):
@@ -141,7 +131,6 @@ def get_similar_user_recommendations(user_id, seen_products, limit=5):
         return recommendations
         
     except Exception as e:
-        print(f"❌ Error in similar user recommendations: {e}")
         return []
 
 @app.route('/api/recommendations', methods=['GET'])
@@ -156,25 +145,19 @@ def get_recommendations():
     
     try:
         user_id = get_jwt_identity()
-        print(f"\n{'='*60}")
-        print(f"🎯 GENERATING RECOMMENDATIONS FOR USER: {user_id}")
-        print(f"{'='*60}")
         
         # Get user's interaction history
         seen_products, product_scores = get_user_interaction_history(user_id)
-        print(f"📊 User has interacted with {len(seen_products)} products")
         
         # Get all current products from database
         current_products = list(products_collection.find({}, {'_id': 1}))
         current_product_ids = [str(product['_id']) for product in current_products]
-        print(f"📦 Total products in catalog: {len(current_product_ids)}")
         
         recommendations = []
         strategy_used = "none"
         
         # Strategy 1: ML-based predictions for users in training data
         if str(user_id) in all_user_ids:
-            print("🤖 User is in training data - using ML predictions")
             strategy_used = "ml"
             
             # Get unseen products that model was trained on
@@ -197,16 +180,13 @@ def get_recommendations():
                 predictions.sort(key=lambda x: x[1], reverse=True)
                 ml_recommendations = [pid for pid, score in predictions[:6]]
                 recommendations.extend(ml_recommendations)
-                print(f"   ✅ Got {len(ml_recommendations)} ML recommendations")
         else:
-            print("👤 New user - using collaborative filtering")
             strategy_used = "collaborative"
             
             # Strategy 2: Find similar users and recommend their favorites
             similar_user_recs = get_similar_user_recommendations(user_id, seen_products, limit=5)
             if similar_user_recs:
                 recommendations.extend(similar_user_recs)
-                print(f"   ✅ Got {len(similar_user_recs)} recommendations from similar users")
         
         # Strategy 3: Add new products (not in training data) - exploration
         new_products = [
@@ -219,7 +199,6 @@ def get_recommendations():
             slots_available = min(3, 10 - len(recommendations))
             new_product_sample = new_products[:slots_available]
             recommendations.extend(new_product_sample)
-            print(f"   ✨ Added {len(new_product_sample)} new products")
         
         # Strategy 4: Fill with popular products if needed
         if len(recommendations) < 8:
@@ -229,13 +208,11 @@ def get_recommendations():
                 limit=needed
             )
             recommendations.extend(popular_recs)
-            print(f"   ⭐ Added {len(popular_recs)} popular products")
             if not strategy_used or strategy_used == "none":
                 strategy_used = "popular"
         
         # Strategy 5: Last resort - show user's favorites (re-engagement)
         if not recommendations and product_scores:
-            print("   💝 Showing user's favorite products (re-engagement)")
             strategy_used = "favorites"
             favorite_products = sorted(
                 product_scores.items(), 
@@ -246,7 +223,6 @@ def get_recommendations():
         
         # Final fallback - completely random (shouldn't happen often)
         if not recommendations:
-            print("   📋 Using random products as last resort")
             strategy_used = "random"
             available_products = [
                 pid for pid in current_product_ids 
@@ -263,10 +239,6 @@ def get_recommendations():
                 seen.add(pid)
                 unique_recommendations.append(pid)
         
-        print(f"\n✅ Final recommendations: {len(unique_recommendations)} products")
-        print(f"   Strategy: {strategy_used}")
-        print(f"{'='*60}\n")
-        
         return jsonify({
             "success": True, 
             "recommendations": unique_recommendations[:10],
@@ -279,8 +251,6 @@ def get_recommendations():
         })
         
     except Exception as e:
-        print(f"❌ Error during recommendation generation: {e}")
-        traceback.print_exc()
         return jsonify({
             "success": False, 
             "message": "An error occurred while generating recommendations"
@@ -290,10 +260,6 @@ def get_recommendations():
 def retrain_model():
     """Retrain the recommendation model with current data"""
     try:
-        print("\n" + "="*60)
-        print("🔄 STARTING MODEL RETRAINING")
-        print("="*60)
-        
         import subprocess
         import sys
         
@@ -316,11 +282,6 @@ def retrain_model():
             all_product_ids = metadata['product_ids']
             all_user_ids = metadata['user_ids']
             
-            print("✅ Model retrained and reloaded successfully!")
-            print(f"   📦 {len(all_product_ids)} products")
-            print(f"   👥 {len(all_user_ids)} users")
-            print("="*60 + "\n")
-            
             return jsonify({
                 "success": True, 
                 "message": "Model retrained successfully",
@@ -336,8 +297,6 @@ def retrain_model():
             })
         else:
             error_msg = result.stderr if result.stderr else "Unknown training error"
-            print(f"❌ Training failed: {error_msg}")
-            print("="*60 + "\n")
             return jsonify({
                 "success": False, 
                 "message": "Model training failed",
@@ -345,14 +304,11 @@ def retrain_model():
             }), 500
             
     except subprocess.TimeoutExpired:
-        print("❌ Training timeout - process took too long")
         return jsonify({
             "success": False, 
             "message": "Training timeout - please try again or check your data size"
         }), 500
     except Exception as e:
-        print(f"❌ Retraining error: {e}")
-        traceback.print_exc()
         return jsonify({
             "success": False, 
             "message": f"Retraining error: {str(e)}"
@@ -437,8 +393,6 @@ def get_status():
         })
         
     except Exception as e:
-        print(f"❌ Status check error: {e}")
-        traceback.print_exc()
         return jsonify({
             "success": False,
             "message": f"Status check failed: {str(e)}"
@@ -470,16 +424,4 @@ def home():
     })
 
 if __name__ == '__main__':
-    print("\n" + "="*60)
-    print("🚀 STARTING RECOMMENDATION SERVICE")
-    print("="*60)
-    
-    if model is None:
-        print("⚠️  WARNING: Model not loaded!")
-        print("   Run 'python train.py' to train the model first.")
-    else:
-        print("✅ Service ready to serve recommendations")
-    
-    print("="*60 + "\n")
-    
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False)

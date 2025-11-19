@@ -10,13 +10,7 @@ const Cart = () => {
   const [cartData,setCartData]=useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Debug logging
-  console.log('Cart Debug:', {
-    cartItems,
-    productScreenshots: productScreenshots?.length || 0,
-    cartData: cartData.length,
-    isAuthenticated
-  });
+
   useEffect(()=>{
     const tempData=[];
     for(const items in cartItems){

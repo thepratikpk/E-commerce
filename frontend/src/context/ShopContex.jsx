@@ -233,7 +233,7 @@ const ShopContextProvider = (props) => {
             return updated;
         });
         
-        console.log('📍 Tracked product visit:', product.name);
+
     };
 
     // Get last visited product for recommendations
@@ -362,7 +362,7 @@ const ShopContextProvider = (props) => {
                 setRecentlyViewedProducts(parsed);
                 if (parsed.length > 0) {
                     setLastVisitedProduct(parsed[0]);
-                    console.log('📍 Loaded recently viewed products:', parsed.length);
+
                 }
             }
         } catch (error) {

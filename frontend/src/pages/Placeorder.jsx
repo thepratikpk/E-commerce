@@ -178,9 +178,7 @@ const Placeorder = () => {
             // Clear cart after successful order
             try {
               await clearCart();
-              console.log('Cart cleared successfully after order placement');
             } catch (error) {
-              console.error('Error clearing cart:', error);
             }
             navigate('/order');
           }

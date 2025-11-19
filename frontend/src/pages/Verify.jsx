@@ -15,26 +15,19 @@ const Verify = () => {
       const success = searchParams.get('success');
       const orderId = searchParams.get('orderId');
 
-      console.log('Verify page - URL params:', { success, orderId });
-      console.log('Verify page - isAuthenticated:', isAuthenticated);
-
       if (!isAuthenticated) {
-        console.log('User not authenticated, redirecting to login');
         navigate('/login');
         return;
       }
 
       if (!orderId) {
-        console.log('No order ID found in URL');
         toast.error('Invalid verification link');
         navigate('/');
         return;
       }
 
       try {
-        console.log('Calling verifyStripe API with:', { orderId, success });
         const response = await orderAPI.verifyStripe(orderId, success);
-        console.log('VerifyStripe response:', response);
         
         if (response.success) {
           if (success === 'true') {
@@ -62,7 +55,6 @@ const Verify = () => {
             navigate('/cart');
           }
         } else {
-          console.log('Verification failed:', response);
           toast.error('Payment verification failed');
           navigate('/cart');
         }

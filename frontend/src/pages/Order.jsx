@@ -19,22 +19,11 @@ const Order = () => {
   const loadOrderData = async () => {
     try {
       setLoading(true);
-      console.log('🔍 Loading orders...');
       const response = await orderAPI.getUserOrders();
-      
-      console.log('📦 Orders API Response:', response);
-      console.log('📊 Orders data:', response.data);
-      console.log('📈 Number of orders:', response.data?.length || 0);
       
       if (response.success) {
         const ordersData = response.data || [];
-        console.log('✅ Setting orders:', ordersData);
         setOrders(ordersData);
-        
-        // Log order statuses for debugging
-        ordersData.forEach((order, index) => {
-          console.log(`📋 Order ${index + 1}: ID=${order._id.slice(-8)}, Status=${order.status}, Amount=${order.amount}`);
-        });
       } else {
         console.error('❌ API returned success=false:', response);
       }
@@ -52,21 +41,10 @@ const Order = () => {
   };
 
   useEffect(() => {
-    console.log('📄 Orders page - auth status changed:', { isAuthenticated });
     if (isAuthenticated) {
       loadOrderData();
     }
   }, [isAuthenticated]);
-
-  // Debug user context in orders page
-  useEffect(() => {
-    console.log('📄 Orders page mounted - current user:', user ? { id: user._id, name: user.name } : 'No user');
-  }, []);
-
-  // Track user changes in orders page
-  useEffect(() => {
-    console.log('📄 Orders page - user changed:', user ? { id: user._id, name: user.name } : 'No user');
-  }, [user]);
 
   // Removed fancy colors - using simple text styling instead
 

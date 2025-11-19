@@ -15,39 +15,25 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
       // Admin request using Bearer token
       token = authHeader.replace(/^Bearer\s?/, "");
       isAdminRequest = true;
-      console.log('🔐 Admin request with Bearer token');
     } else if (cookieToken) {
       // User request using cookie
       token = cookieToken;
-      console.log('🔐 User request with cookie token');
     } else {
-      console.log('🔐 No token found in request');
       throw new ApiError(401, "Unauthorized Token");
     }
 
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    console.log('🔐 Token decoded for user:', decodedToken._id, isAdminRequest ? '(Admin)' : '(User)');
 
     const user = await User.findById(decodedToken?._id).select("-password -refreshToken");
 
     if (!user) {
-      console.log('🔐 User not found for token:', decodedToken._id);
       throw new ApiError(401, "Invalid AccessToken");
     }
-
-    console.log('🔐 Authenticated user:', {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      requestType: isAdminRequest ? 'Admin' : 'User'
-    });
 
     req.user = user;
     req.isAdminRequest = isAdminRequest;
     next();
   } catch (error) {
-    console.log('🔐 Auth error:', error.message);
     throw new ApiError(401, error?.message || "Invalid Access Token Error");
   }
 });

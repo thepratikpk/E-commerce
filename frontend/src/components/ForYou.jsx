@@ -24,8 +24,6 @@ const ForYou = () => {
 
       try {
         if (isAuthenticated && token) {
-          console.log("🤖 Fetching personalized AI recommendations...");
-          
           const data = await recommendationAPI.getRecommendations(token);
 
           if (data.success && data.recommendations && data.recommendations.length > 0) {
@@ -38,7 +36,6 @@ const ForYou = () => {
               .filter(product => product !== undefined); // Remove any products not found
 
             if (fullProductDetails.length > 0) {
-              console.log(`✅ Got ${fullProductDetails.length} AI recommendations`);
               setRecommendedProducts(fullProductDetails);
               setRecommendationMeta(data.metadata);
               return;
@@ -47,7 +44,6 @@ const ForYou = () => {
 
           // If ML service returns empty (user has seen everything), use category-based
           if (data.success && data.recommendations && data.recommendations.length === 0) {
-            console.log("🎯 Power user detected! Using category-based recommendations...");
             // Skip recently viewed here since we have a separate section for that
             // Fall through to category-based logic below
           }
@@ -55,8 +51,6 @@ const ForYou = () => {
         
         // Enhanced fallback based on last visited product (for all users)
         if (lastVisitedProduct) {
-          console.log("📍 Using last visited product for recommendations:", lastVisitedProduct.name);
-          
           // Get products from same category as last visited
           const sameCategoryProducts = productScreenshots.filter(product => 
             product._id !== lastVisitedProduct._id && 
@@ -94,7 +88,6 @@ const ForYou = () => {
         }
         
         // Final fallback - random popular products
-        console.log("🎲 Using random products as final fallback");
         const fallbackProducts = [...productScreenshots]
           .sort(() => Math.random() - 0.5)
           .slice(0, 10);

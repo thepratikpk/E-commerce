@@ -19,9 +19,6 @@ const Login = ({ setToken }) => {
         { withCredentials: true }
       );
 
-      // ✅ Debug: Log the full response to see the structure
-      console.log('Full login response:', response.data);
-
       if (response.data.success) {
         // ✅ Try multiple possible token locations
         let token = null;
@@ -37,17 +34,11 @@ const Login = ({ setToken }) => {
           token = response.data.accessToken;
         }
 
-        console.log('Extracted token:', token);
-
         if (token) {
           setToken(token);
           localStorage.setItem('token', token);
           toast.success('Login successful!');
         } else {
-          console.log('Response structure:', Object.keys(response.data));
-          if (response.data.data) {
-            console.log('Data structure:', Object.keys(response.data.data));
-          }
           toast.error('No token found in response');
         }
       } else {

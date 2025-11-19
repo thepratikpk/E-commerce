@@ -20,10 +20,8 @@ const uploadOnCloudinary = async (localFilePath) => {
         if (fs.existsSync(localFilePath)) {
             fs.unlinkSync(localFilePath);
         }
-        console.log("File uploaded on Cloudinary")
         return response;
     } catch (err) {
-        console.log("Cloudinary upload error: ", err)
         // remove locally saved temp files
         if (fs.existsSync(localFilePath)) {
             fs.unlinkSync(localFilePath)
@@ -44,7 +42,6 @@ const getPublicIdFromUrl = (url) => {
 
         return `${folder}/${fileName}`;
     } catch (error) {
-        console.log("Error on extrancting public id :", error)
         return null
     }
 };
@@ -56,10 +53,8 @@ const deleteFromCloudinary = async (publicId) => {
         }
 
         const response = await cloudinary.uploader.destroy(publicId)
-        console.log("File is deleted from cloudinary")
         return response
     } catch (err) {
-        console.log("Cloudinary deleting error:", err)
         return null
     }
 }

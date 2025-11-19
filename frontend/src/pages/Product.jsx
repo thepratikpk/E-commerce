@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContex.jsx';
 import { assets } from '../assets/assets.jsx';
@@ -12,19 +12,21 @@ const Product = () => {
     const [productData, setProductData] = useState(null);
     const [image, setImage] = useState(null);
     const [size, setSize] = useState('');
+    const eventLoggedRef = useRef(false); // Track if event has been logged for this product
 
     useEffect(() => {
         const product = productScreenshots.find(item => item._id === id);
         if (product) {
             setProductData(product);
             setImage(product.images?.[0] || null);
+            eventLoggedRef.current = false; // Reset event logging flag for new product
         }
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }, [id, productScreenshots]);
 
     useEffect(() => {
-        if (productData) {
-            // Track product visit for recommendations
+        if (productData && !eventLoggedRef.current) {
+            // Track product visit for recommendations (only once per product)
             trackProductVisit(productData);
 
             const logViewEvent = async () => {
@@ -36,15 +38,17 @@ const Product = () => {
                         userId: isAuthenticated ? userId : undefined,
                     };
                     await eventAPI.logEvent(eventData, token);
+                    eventLoggedRef.current = true; // Mark as logged
 
                 } catch (error) {
                     console.error("Failed to log view event:", error);
                 }
             };
 
+            // Only log the event once per product visit
             logViewEvent();
         }
-    }, [productData, isAuthenticated, userId, token, trackProductVisit]);
+    }, [productData?._id, isAuthenticated, userId, token]); // Include necessary dependencies
 
     if (!productData) return <div className='opacity-0'></div>;
 

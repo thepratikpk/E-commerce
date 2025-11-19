@@ -57,7 +57,6 @@ const Login = () => {
           payload,
           { withCredentials: true }
         );
-        console.log('Sign Up Success:', res.data);
         toast.success(res.data.message || 'User registered successfully!');
       } else {
         const payload = {
